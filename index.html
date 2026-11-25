@@ -150,6 +150,24 @@
   .task input:checked::after{content:"\2713";color:#fff;font-size:.85rem;font-weight:800;position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
   .task span{font-size:.95rem;line-height:1.35}
   .task.done span{color:var(--muted);text-decoration:line-through}
+  .wp-date{border:1px solid var(--line);border-radius:10px;background:#fff;padding:9px 11px;font-family:'Assistant';font-weight:700;font-size:.95rem;color:var(--ink);cursor:pointer}
+  .wp-date:focus{outline:0;border-color:var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+  .edit{outline:0;border-radius:6px;padding:2px 6px;transition:background .15s,box-shadow .15s;cursor:text;min-width:40px;display:inline-block}
+  .edit:hover{background:var(--green-soft)}
+  .edit:focus{background:#fff;box-shadow:0 0 0 2px var(--green)}
+  .edit:empty::before{content:attr(data-ph);color:#c4c0b3;font-weight:400}
+  .pt.edit{font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:1.15rem}
+  .phase-h .pg.edit{min-width:60px}
+  .task span.edit{flex:1}
+  .task .del{margin-inline-start:auto;flex:none;border:0;background:transparent;color:#c4c0b3;font-size:1.1rem;font-weight:700;cursor:pointer;padding:0 4px;line-height:1;align-self:center}
+  .task .del:hover{color:var(--terra)}
+  .phase-del{border:0;background:transparent;color:#c4c0b3;font-size:1rem;cursor:pointer;padding:0 4px;flex:none}
+  .phase-del:hover{color:var(--terra)}
+  .add-task,.add-phase{border:1px dashed var(--line);background:#fff;border-radius:10px;padding:8px 14px;font-family:'Assistant';font-weight:700;font-size:.85rem;color:var(--green);cursor:pointer;transition:.15s}
+  .add-task{margin:2px 0 4px}
+  .add-task:hover,.add-phase:hover{border-color:var(--green);background:var(--green-soft)}
+  .add-phase{display:block;width:100%;margin-top:14px;padding:11px}
+  .phase{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--paper)}
   footer{margin-top:54px;font-size:.78rem;color:var(--muted);text-align:center;line-height:1.7}
   @media(max-width:760px){
     h1{font-size:2.1rem}.cards,.inputs,.timeline{grid-template-columns:1fr}.inputs{gap:12px}
@@ -194,16 +212,18 @@
   </section>
 
   <section>
-    <h2><span class="n">02</span>תוכנית עבודה — יעד 31.7<span class="hint">סמן משימות · נשמר</span></h2>
+    <h2><span class="n">02</span>תוכנית עבודה<span class="hint">ערוך הכל · גרור לא, פשוט כתוב</span></h2>
     <div class="wp">
       <div class="wp-head">
-        <div class="wp-days"><span id="wp-daysnum">—</span><small>ימים ל-31.7</small></div>
+        <div class="wp-days"><span id="wp-daysnum">—</span><small>ימים ליעד</small></div>
         <div class="wp-prog">
+          <div class="wp-prog-row"><span>תאריך יעד</span><input type="date" id="wp-deadline" class="wp-date"></div>
           <div class="wp-prog-row"><span>התקדמות משימות</span><b id="wp-pct">0%</b></div>
           <div class="track"><i id="wp-bar"></i></div>
         </div>
       </div>
       <div id="wp-phases"></div>
+      <button class="add-phase" id="wp-add-phase">+ הוסף שלב / חודש</button>
     </div>
   </section>
 
@@ -525,7 +545,7 @@ function renumber(){
 
 document.getElementById('reset').addEventListener('click',()=>{
   cur=baseline.map(i=>i[1]);days=baseline.map(i=>i[5]||0);order=[...defaultOrder];
-  tasksDone={};try{localStorage.removeItem('recoveryTasks');}catch(e){}
+  if(typeof wp!=='undefined'){wp=JSON.parse(JSON.stringify(defaultWP));try{localStorage.removeItem('recoveryWP');}catch(e){}}
   renderDebts();renderItems();recompute();
   if(document.getElementById('wp-phases'))renderWP();
 });
@@ -540,56 +560,97 @@ if(window.Sortable){
   });
 }
 
-/* ----- work plan checklist ----- */
-const wpPhases=[
-  {title:"עכשיו — סוף מאי",target:"הכנה",items:[
-    "פנייה לבנק לאומי: איחוד/קיזוז המינוס (להמיר משיכת יתר להלוואה זולה)",
-    "קיצוץ מנויים: נטפליקס, פרי טי וי, הולמס פלייס (~405 ₪)",
-    "סגירת Paybox (1,000) + אשראי פפר"
-  ]},
-  {title:"יוני — חודש 1",target:"יעד 30.6: מקס + פפר סגורים",items:[
-    "לכוון להכנסה גבוהה (60–70k)",
-    "סגירת אשראי מקס (11,425)",
-    "סגירת פפר (4,503)"
-  ]},
-  {title:"יולי — חודש 2",target:"יעד 31.7: לאומי = 0 ✅",items:[
-    "כל העודף → בנק לאומי (41,290)",
-    "לאומי סגור — סיום התוכנית"
-  ]}
-];
-let tasksDone={};
-try{const t=JSON.parse(localStorage.getItem('recoveryTasks'));if(t&&typeof t==='object')tasksDone=t;}catch(e){}
+/* ----- work plan — fully editable ----- */
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const defaultWP={
+  deadline:"2027-02-28",
+  phases:[
+    {title:"דצמבר — חודש 1",target:"יעד סוף דצמבר",tasks:[
+      {text:"סגירת הזנב הקטן: Paybox + אשראי פפר",done:false},
+      {text:"לכוון להכנסה גבוהה",done:false}
+    ]},
+    {title:"ינואר — חודש 2",target:"יעד סוף ינואר",tasks:[
+      {text:"סגירת אשראי מקס",done:false},
+      {text:"סגירת פפר",done:false}
+    ]},
+    {title:"פברואר — חודש 3",target:"יעד: לאומי = 0",tasks:[
+      {text:"כל העודף → בנק לאומי",done:false}
+    ]}
+  ]
+};
+let wp;
+try{const w=JSON.parse(localStorage.getItem('recoveryWP'));wp=(w&&Array.isArray(w.phases))?w:JSON.parse(JSON.stringify(defaultWP));}
+catch(e){wp=JSON.parse(JSON.stringify(defaultWP));}
+function saveWP(){try{localStorage.setItem('recoveryWP',JSON.stringify(wp));}catch(e){}
+  if(ready&&syncCfg.auto&&syncCfg.key){clearTimeout(_autoTimer);_autoTimer=setTimeout(cloudSave,1800);}}
 function renderWP(){
-  let html='',k=0;
-  wpPhases.forEach(ph=>{
-    html+=`<div class="phase"><div class="phase-h"><div class="pt">${ph.title}</div><div class="pg">${ph.target}</div></div>`;
-    ph.items.forEach(it=>{
-      const id='t'+k;const done=!!tasksDone[id];
-      html+=`<label class="task ${done?'done':''}"><input type="checkbox" data-tid="${id}" ${done?'checked':''}><span>${it}</span></label>`;
-      k++;
-    });
-    html+='</div>';
-  });
-  document.getElementById('wp-phases').innerHTML=html;
+  const el=document.getElementById('wp-phases');if(!el)return;
+  el.innerHTML=wp.phases.map((ph,pi)=>{
+    const tasks=ph.tasks.map((t,ti)=>
+      `<div class="task ${t.done?'done':''}">
+        <input type="checkbox" data-p="${pi}" data-t="${ti}" ${t.done?'checked':''}>
+        <span class="edit" contenteditable="true" data-p="${pi}" data-t="${ti}" data-ph="משימה…">${esc(t.text)}</span>
+        <button class="del" data-p="${pi}" data-t="${ti}" title="מחק">✕</button>
+      </div>`).join('');
+    return `<div class="phase">
+      <div class="phase-h">
+        <div class="pt edit" contenteditable="true" data-p="${pi}" data-f="title" data-ph="שם השלב/חודש">${esc(ph.title)}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="pg edit" contenteditable="true" data-p="${pi}" data-f="target" data-ph="יעד">${esc(ph.target)}</div>
+          <button class="phase-del" data-p="${pi}" title="מחק שלב">✕</button>
+        </div>
+      </div>
+      ${tasks}
+      <button class="add-task" data-p="${pi}">+ הוסף משימה</button>
+    </div>`;
+  }).join('');
+  const d=document.getElementById('wp-deadline');if(d&&wp.deadline)d.value=wp.deadline;
   updateWP();
 }
 function updateWP(){
-  const boxes=[...document.querySelectorAll('#wp-phases input')];
-  const done=boxes.filter(b=>b.checked).length,tot=boxes.length||1;
-  const pct=Math.round(done/tot*100);
+  let done=0,tot=0;
+  wp.phases.forEach(ph=>ph.tasks.forEach(t=>{tot++;if(t.done)done++;}));
+  const pct=tot?Math.round(done/tot*100):0;
   document.getElementById('wp-pct').textContent=pct+'%';
   document.getElementById('wp-bar').style.width=pct+'%';
-  const target=new Date(2026,6,31),today=new Date();today.setHours(0,0,0,0);
-  document.getElementById('wp-daysnum').textContent=Math.max(0,Math.round((target-today)/86400000));
+  const el=document.getElementById('wp-daysnum');
+  if(wp.deadline){const target=new Date(wp.deadline+'T00:00:00'),today=new Date();today.setHours(0,0,0,0);
+    el.textContent=Math.max(0,Math.round((target-today)/86400000));}
+  else el.textContent='—';
 }
-document.getElementById('wp-phases').addEventListener('change',e=>{
+const wpEl=document.getElementById('wp-phases');
+wpEl.addEventListener('change',e=>{
   if(e.target.matches('input[type=checkbox]')){
-    tasksDone[e.target.dataset.tid]=e.target.checked;
+    wp.phases[+e.target.dataset.p].tasks[+e.target.dataset.t].done=e.target.checked;
     e.target.closest('.task').classList.toggle('done',e.target.checked);
-    try{localStorage.setItem('recoveryTasks',JSON.stringify(tasksDone));}catch(err){}
-    updateWP();
+    saveWP();updateWP();
   }
 });
+wpEl.addEventListener('input',e=>{
+  const t=e.target;if(!t.classList.contains('edit'))return;
+  const pi=+t.dataset.p;
+  if(t.dataset.f==='title')wp.phases[pi].title=t.textContent;
+  else if(t.dataset.f==='target')wp.phases[pi].target=t.textContent;
+  else if(t.dataset.t!==undefined)wp.phases[pi].tasks[+t.dataset.t].text=t.textContent;
+  saveWP();
+});
+wpEl.addEventListener('keydown',e=>{
+  if(e.target.classList.contains('edit')&&e.key==='Enter'){e.preventDefault();e.target.blur();}
+});
+wpEl.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.classList.contains('del')){wp.phases[+b.dataset.p].tasks.splice(+b.dataset.t,1);saveWP();renderWP();}
+  else if(b.classList.contains('phase-del')){
+    if(confirm('למחוק את השלב כולו?')){wp.phases.splice(+b.dataset.p,1);saveWP();renderWP();}
+  }
+  else if(b.classList.contains('add-task')){wp.phases[+b.dataset.p].tasks.push({text:'',done:false});saveWP();renderWP();
+    setTimeout(()=>{const spans=wpEl.querySelectorAll(`.phase:nth-child(${+b.dataset.p+1}) .task span.edit`);if(spans.length)spans[spans.length-1].focus();},30);}
+});
+document.getElementById('wp-add-phase').addEventListener('click',()=>{
+  wp.phases.push({title:'',target:'',tasks:[]});saveWP();renderWP();
+  setTimeout(()=>{const pts=wpEl.querySelectorAll('.pt.edit');if(pts.length)pts[pts.length-1].focus();},30);
+});
+document.getElementById('wp-deadline').addEventListener('change',e=>{wp.deadline=e.target.value;saveWP();updateWP();});
 renderWP();
 
 /* ----- cloud sync (JSONBin) ----- */
@@ -601,7 +662,7 @@ function saveCfg(){
   try{localStorage.setItem('recoverySync',JSON.stringify(syncCfg));}catch(e){}
 }
 function skStatus(msg,ok){const e=document.getElementById('sk-status');e.textContent=msg;e.style.color=ok?'var(--green)':'var(--terra)';}
-function payload(){return{amounts:cur,days:days,order:order,tasks:tasksDone,weekPaid:weekPaid,ts:Date.now()};}
+function payload(){return{amounts:cur,days:days,order:order,wp:wp,weekPaid:weekPaid,ts:Date.now()};}
 async function cloudSave(){
   saveCfg();
   if(!syncCfg.key){skStatus('חסר Master Key',false);return;}
@@ -631,7 +692,7 @@ async function cloudLoad(){
     if(Array.isArray(rec.amounts)&&rec.amounts.length===baseline.length)cur=rec.amounts.map(Number);
     if(Array.isArray(rec.days)&&rec.days.length===baseline.length)days=rec.days.map(Number);
     if(Array.isArray(rec.order)&&rec.order.length===defaultOrder.length&&rec.order.every(n=>defaultOrder.includes(n)))order=rec.order;
-    if(rec.tasks&&typeof rec.tasks==='object')tasksDone=rec.tasks;
+    if(rec.wp&&Array.isArray(rec.wp.phases)){wp=rec.wp;saveWP();}
     if(rec.weekPaid&&typeof rec.weekPaid==='object'){weekPaid=rec.weekPaid;saveWeekPaid();}
     renderDebts();renderItems();recompute();renderWP();
     skStatus('נטען מהענן ✓ '+new Date().toLocaleTimeString('he-IL'),true);
