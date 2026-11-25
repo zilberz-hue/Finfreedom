@@ -236,7 +236,16 @@
   </section>
 
   <section>
-    <h2><span class="n">04</span>הנחות ותקציב חודשי</h2>
+    <h2><span class="n">04</span>ציר זמן לסגירה</h2>
+    <div class="timeline">
+      <div class="tl"><div class="lab">תרחיש רצפה</div><div class="mo" id="t-floor">—<small> חודשים</small></div><div class="track"><i id="trk-floor"></i></div></div>
+      <div class="tl mid"><div class="lab">תרחיש ממוצע</div><div class="mo" id="t-avg">—<small> חודשים</small></div><div class="track"><i id="trk-avg"></i></div></div>
+      <div class="tl"><div class="lab">תרחיש חזק</div><div class="mo" id="t-strong">—<small> חודשים</small></div><div class="track"><i id="trk-strong"></i></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">05</span>הנחות ותקציב חודשי</h2>
     <div class="panel">
       <div class="inputs">
         <div class="field"><label>הכנסה — חודש רצפה</label><div class="ic"><input id="in-floor" type="number" value="32000"><span class="unit">₪</span></div></div>
@@ -259,15 +268,6 @@
   </section>
 
   <section>
-    <h2><span class="n">05</span>ציר זמן לסגירה</h2>
-    <div class="timeline">
-      <div class="tl"><div class="lab">תרחיש רצפה</div><div class="mo" id="t-floor">—<small> חודשים</small></div><div class="track"><i id="trk-floor"></i></div></div>
-      <div class="tl mid"><div class="lab">תרחיש ממוצע</div><div class="mo" id="t-avg">—<small> חודשים</small></div><div class="track"><i id="trk-avg"></i></div></div>
-      <div class="tl"><div class="lab">תרחיש חזק</div><div class="mo" id="t-strong">—<small> חודשים</small></div><div class="track"><i id="trk-strong"></i></div></div>
-    </div>
-  </section>
-
-  <section>
     <h2><span class="n">06</span>סיכום הוצאות חודשיות</h2>
     <table>
       <thead><tr><th>סוג הוצאה</th><th>בית</th><th>עסק</th><th>סה"כ</th></tr></thead>
@@ -281,7 +281,22 @@
   </section>
 
   <section>
-    <h2><span class="n">07</span>כל הפריטים — לעריכה</h2>
+    <h2><span class="n">07</span>סיכום שבועי<span class="hint">לפי תאריכי הורדה</span></h2>
+    <div class="weeks" id="weeks"></div>
+    <div class="toolbar"><button class="btn" id="wk-clear">↻ חודש חדש — נקה סימונים</button></div>
+    <div class="note">סמן כל חיוב ששולם — הוא יורד מהשבוע, וסכום השבוע מראה כמה <b>נותר</b> לשלם. כשהכל מסומן השבוע נצבע ירוק. החלוקה: שבוע 1 = 1–7 · 2 = 8–14 · 3 = 15–21 · 4 = 22–31. ברא מתחלק אוטומטית לרבעים.</div>
+  </section>
+
+  <section>
+    <h2><span class="n">08</span>לוח חיובים חודשי<span class="hint">לפי תאריך הורדה</span></h2>
+    <table>
+      <thead><tr><th>תאריך</th><th>פריט</th><th>סכום</th><th class="hide-sm">שיוך</th></tr></thead>
+      <tbody id="calendar"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="n">09</span>כל הפריטים — לעריכה</h2>
     <table>
       <thead><tr><th>פריט</th><th>סכום</th><th>תאריך הורדה</th><th>שיוך</th><th class="hide-sm">סוג</th><th class="hide-sm">חודשי/יתרה</th></tr></thead>
       <tbody id="items"></tbody>
@@ -290,21 +305,6 @@
       <button class="btn" id="reset">↺ אפס הכל (כולל סדר)</button>
       <span class="saved" id="saved">✓ נשמר</span>
     </div>
-  </section>
-
-  <section>
-    <h2><span class="n">08</span>סיכום שבועי<span class="hint">לפי תאריכי הורדה</span></h2>
-    <div class="weeks" id="weeks"></div>
-    <div class="toolbar"><button class="btn" id="wk-clear">↻ חודש חדש — נקה סימונים</button></div>
-    <div class="note">סמן כל חיוב ששולם — הוא יורד מהשבוע, וסכום השבוע מראה כמה <b>נותר</b> לשלם. כשהכל מסומן השבוע נצבע ירוק. החלוקה: שבוע 1 = 1–7 · 2 = 8–14 · 3 = 15–21 · 4 = 22–31. ברא מתחלק אוטומטית לרבעים.</div>
-  </section>
-
-  <section>
-    <h2><span class="n">09</span>לוח חיובים חודשי<span class="hint">לפי תאריך הורדה</span></h2>
-    <table>
-      <thead><tr><th>תאריך</th><th>פריט</th><th>סכום</th><th class="hide-sm">שיוך</th></tr></thead>
-      <tbody id="calendar"></tbody>
-    </table>
   </section>
 
   <section>
